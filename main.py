@@ -55,6 +55,24 @@ def list_words():
     print("-" * 20)
 
 
+def delete_word(word):
+    """Delete a word from the saved list."""
+    words = load_words()
+
+    # Record the initial length to check later
+    initial_count = len(words)
+
+    # List comprehension: Keep only the words that DO NOT match the target word
+    # Use .lower() to make the deletion case-insensitive
+    words = [entry for entry in words if entry["word"].lower() != word.lower()]
+
+    if len(words) == initial_count:
+        print(f"The word '{word}' was not found in your list.")
+    else:
+        save_words(words)
+        print(f"Successfully deleted '{word}'.")
+
+
 def main():
     # 1. Initialize the parser
     parser = argparse.ArgumentParser(description="Word-Stack-CLI: Your personal vocabulary builder.")
@@ -70,6 +88,10 @@ def main():
     # Setup the 'list' command
     list_parser = subparsers.add_parser("list", help="List all saved words")
 
+    # Setup the 'delete' command
+    delete_parser = subparsers.add_parser("delete", help="Delete a saved word")
+    delete_parser.add_argument("word", type=str, help="The English word to delete")
+
     # 3. Parse the arguments that the user typed in the terminal
     args = parser.parse_args()
 
@@ -78,6 +100,8 @@ def main():
         add_word(args.word, args.translation)
     elif args.command == "list":
         list_words()
+    elif args.command == "delete":
+        delete_word(args.word)
     else:
         # If the user just runs `python main.py` with no arguments, show the help menu
         parser.print_help()
