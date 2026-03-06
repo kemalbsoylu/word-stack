@@ -144,6 +144,57 @@ def delete_word(word):
         print(f"✅ Successfully deleted '{word}'.")
 
 
+def study_words():
+    """Start an interactive study session with words."""
+    words = load_words()
+
+    if not words:
+        print("Your word list is empty. Add some words first!")
+        return
+
+    # Helper function to sort words by last_studied date
+    def get_sort_key(entry):
+        date_str = entry.get("last_studied")
+        if not date_str or date_str == "N/A":
+            # If it has never been studied, treat it as very old so it appears first
+            return "0000-00-00 00:00:00"
+        return date_str
+
+    # Sort the list: oldest (or never studied) words come first
+    words.sort(key=get_sort_key)
+
+    # Pick the top 3 words
+    study_list = words[:3]
+
+    print(f"\n🎓 Starting Study Session ({len(study_list)} words)")
+    print("Try to remember the translation and meaning. Press ENTER to reveal.")
+    print("Type 'q' and press ENTER at any time to quit early.")
+    print("=" * 50)
+
+    for i, entry in enumerate(study_list):
+        word = entry.get("word", "Unknown")
+        print(f"\nWord {i + 1}/{len(study_list)}: -> ** {word.upper()} ** <-")
+
+        # Pause and wait for user
+        user_input = input("\nPress Enter to reveal answer...")
+        if user_input.lower() == 'q':
+            print("\nEnding study session early. Great job today!")
+            break
+
+        print(f"Translation  : {entry.get('translation', 'N/A')}")
+        print(f"Phonetic     : {entry.get('phonetic', 'N/A')}")
+        print(f"Definition   : {entry.get('definition', 'N/A')}")
+        print(f"Example      : {entry.get('example', 'N/A')}")
+        print("-" * 50)
+
+        # Update the timestamp using ISO format (e.g., "2026-03-06T12:00:00")
+        entry["last_studied"] = datetime.now().isoformat()
+
+    # Save the master list (which now has updated timestamps) back to the JSON file
+    save_words(words)
+    print("\n✅ Study session complete! Progress saved.")
+
+
 def main():
     # 1. Initialize the parser
     parser = argparse.ArgumentParser(description="Word-Stack-CLI: Your personal vocabulary builder.")
@@ -168,6 +219,9 @@ def main():
     delete_parser = subparsers.add_parser("delete", help="Delete a saved word")
     delete_parser.add_argument("word", type=str, help="The English word to delete")
 
+    # 'study' command
+    study_parser = subparsers.add_parser("study", help="Start a daily study session (3 words)")
+
     # 3. Parse the arguments that the user typed in the terminal
     args = parser.parse_args()
 
@@ -180,6 +234,8 @@ def main():
         show_word(args.word)
     elif args.command == "delete":
         delete_word(args.word)
+    elif args.command == "study":
+        study_words()
     else:
         # If the user just runs `python main.py` with no arguments, show the help menu
         parser.print_help()
