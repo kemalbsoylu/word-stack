@@ -1,9 +1,49 @@
 import argparse
 import json
 import os
+import requests
+from datetime import datetime
 
 # Define the file name as a constant at the top
 DATA_FILE = "words.json"
+
+
+def get_word_info(word):
+    """Fetch word details from the Free Dictionary API."""
+    url = f"https://api.dictionaryapi.dev/api/v2/entries/en/{word}"
+
+    try:
+        response = requests.get(url)
+
+        if response.status_code == 404:
+            print(f"⚠️ Could not find extra info for '{word}' on the API.")
+            return None
+
+        response.raise_for_status()  # Check for other errors (e.g., 500)
+        data = response.json()[0]  # The API returns a list, take the first entry
+
+        # Using .get() is safer than square brackets [] to avoid KeyErrors
+        phonetic = data.get("phonetic", "N/A")
+
+        # Grab the first meaning
+        definition = "No definition found"
+        example = "No example found"
+
+        if data.get("meanings"):
+            first_meaning = data["meanings"][0]
+            if first_meaning.get("definitions"):
+                definition = first_meaning["definitions"][0].get("definition", definition)
+                example = first_meaning["definitions"][0].get("example", example)
+
+        return {
+            "phonetic": phonetic,
+            "definition": definition,
+            "example": example
+        }
+
+    except requests.exceptions.RequestException as e:
+        print(f"⚠️ Connection error: Could not reach the Dictionary API. ({e})")
+        return None
 
 
 def load_words():
@@ -31,14 +71,22 @@ def add_word(word, translation):
             print(f"The word '{word}' is already in your list!")
             return
 
-    # Create a dictionary for the new word
+    # NEW API LOGIC
+    print(f"🔍 Fetching info for '{word}'...")
+    api_info = get_word_info(word)
+
     new_entry = {
         "word": word,
-        "translation": translation
+        "translation": translation,
+        "phonetic": api_info["phonetic"] if api_info else "N/A",
+        "definition": api_info["definition"] if api_info else "N/A",
+        "example": api_info["example"] if api_info else "N/A",
+        "last_studied": None
     }
+
     words.append(new_entry)
     save_words(words)
-    print(f"Successfully added '{word}' -> '{translation}'")
+    print(f"✅ Successfully added '{word}'.")
 
 
 def list_words():
@@ -48,11 +96,34 @@ def list_words():
         print("Your word list is empty. Add some words first!")
         return
 
-    print("\n Your Saved Words:")
-    print("-" * 20)
+    print("\n📚 Your Saved Words:")
+    print("-" * 40)
     for entry in words:
-        print(f"- {entry['word']}: {entry['translation']}")
-    print("-" * 20)
+        # Use .get() here to safely handle words added in Phase 1
+        w = entry.get("word", "Unknown")
+        t = entry.get("translation", "N/A")
+        d = entry.get("definition", "N/A")
+        print(f"- {w} ({t}): {d}")
+    print("-" * 40)
+
+
+def show_word(word):
+    """Show all details for a specific word."""
+    words = load_words()
+
+    for entry in words:
+        if entry.get("word", "").lower() == word.lower():
+            print(f"\n📖 Details for '{entry.get('word')}':")
+            print("-" * 30)
+            print(f"Translation  : {entry.get('translation', 'N/A')}")
+            print(f"Phonetic     : {entry.get('phonetic', 'N/A')}")
+            print(f"Definition   : {entry.get('definition', 'N/A')}")
+            print(f"Example      : {entry.get('example', 'N/A')}")
+            print(f"Last Studied : {entry.get('last_studied', 'N/A')}")
+            print("-" * 30)
+            return
+
+    print(f"⚠️ The word '{word}' was not found in your list.")
 
 
 def delete_word(word):
@@ -70,7 +141,7 @@ def delete_word(word):
         print(f"The word '{word}' was not found in your list.")
     else:
         save_words(words)
-        print(f"Successfully deleted '{word}'.")
+        print(f"✅ Successfully deleted '{word}'.")
 
 
 def main():
@@ -80,15 +151,20 @@ def main():
     # 2. Create subcommands
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
-    # Setup the 'add' command
-    add_parser = subparsers.add_parser("add", help="Add a new word and its translation")
+    # 'add' command: translation is now optional (nargs="?", default="N/A")
+    add_parser = subparsers.add_parser("add", help="Add a new word")
     add_parser.add_argument("word", type=str, help="The English word")
-    add_parser.add_argument("translation", type=str, help="The translation in your language")
+    add_parser.add_argument("translation", type=str, nargs="?", default="N/A",
+                            help="Optional translation in your language")
 
-    # Setup the 'list' command
+    # 'list' command
     list_parser = subparsers.add_parser("list", help="List all saved words")
 
-    # Setup the 'delete' command
+    # 'show' command
+    show_parser = subparsers.add_parser("show", help="Show all details for a specific word")
+    show_parser.add_argument("word", type=str, help="The English word to inspect")
+
+    # 'delete' command
     delete_parser = subparsers.add_parser("delete", help="Delete a saved word")
     delete_parser.add_argument("word", type=str, help="The English word to delete")
 
@@ -100,6 +176,8 @@ def main():
         add_word(args.word, args.translation)
     elif args.command == "list":
         list_words()
+    elif args.command == "show":
+        show_word(args.word)
     elif args.command == "delete":
         delete_word(args.word)
     else:
