@@ -80,3 +80,11 @@ uv run main.py study
 ```bash
 uv run main.py delete "equilibrium"
 ```
+
+## 🤝 Community & Future Improvements
+
+This project is built for learning, which means it is a great place to make your first open-source contribution! 
+
+While we are manually adding translations right now, a fantastic future feature would be **Automatic Translation**. 
+* **The Idea:** If a user only types `uv run main.py add "apple"`, the tool could automatically detect their system language (or accept a configured user choice) and fetch the translation from a free translation API.
+* **Want to build this?** Once we finish Phase 3 and establish our testing guidelines, we will open this up for community contributions!
