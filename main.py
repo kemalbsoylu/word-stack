@@ -163,8 +163,8 @@ def study_words():
     # Sort the list: oldest (or never studied) words come first
     words.sort(key=get_sort_key)
 
-    # Pick the top 3 words
-    study_list = words[:3]
+    # Pick the top 10 words
+    study_list = words[:10]
 
     print(f"\n🎓 Starting Study Session ({len(study_list)} words)")
     print("Try to remember the translation and meaning. Press ENTER to reveal.")
@@ -220,7 +220,7 @@ def main():
     delete_parser.add_argument("word", type=str, help="The English word to delete")
 
     # 'study' command
-    study_parser = subparsers.add_parser("study", help="Start a daily study session (3 words)")
+    study_parser = subparsers.add_parser("study", help="Start a daily study session (10 words)")
 
     # 3. Parse the arguments that the user typed in the terminal
     args = parser.parse_args()
