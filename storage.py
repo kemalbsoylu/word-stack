@@ -1,157 +1,192 @@
-import json
-import os
+import sqlite3
 
 from datetime import datetime
 from api import get_word_info
 
-# Define the file name as a constant at the top
-DATA_FILE = "words.json"
+# Our new database file
+DB_FILE = "words.db"
 
 
-def load_words():
-    """Load words from the JSON file. Return an empty list if it doesn't exist."""
-    if not os.path.exists(DATA_FILE):
-        return []
-    with open(DATA_FILE, "r", encoding="utf-8") as file:
-        return json.load(file)
+def get_connection():
+    """Create and return a database connection."""
+    conn = sqlite3.connect(DB_FILE)
+    # This makes SQLite return rows that act like Python dictionaries
+    conn.row_factory = sqlite3.Row
+    return conn
 
 
-def save_words(words):
-    """Save the list of words to the JSON file."""
-    # Used indent=4 to make the JSON file readable
-    with open(DATA_FILE, "w", encoding="utf-8") as file:
-        json.dump(words, file, indent=4)
+def init_db():
+    """Initialize the database and create the table if it doesn't exist."""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    # Define schema (the structure of the data)
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS words ( 
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            word TEXT UNIQUE NOT NULL,
+            translation TEXT,
+            phonetic TEXT,
+            definition TEXT,
+            example TEXT,
+            last_studied TEXT
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
+# Run this automatically when storage.py is imported
+init_db()
 
 
 def add_word(word, translation):
-    """Add a new word and its translation to the list."""
-    words = load_words()
+    """Add a new word and its translation to the database."""
+    conn = get_connection()
+    cursor = conn.cursor()
 
-    # Check if word already exists to avoid duplicates
-    for entry in words:
-        if entry["word"].lower() == word.lower():
-            print(f"The word '{word}' is already in your list!")
-            return
+    # 1. Check if the word already exists
+    # Use parameterized queries (?) to prevent SQL Injection attacks
+    cursor.execute("SELECT word FROM words WHERE LOWER(word) = LOWER(?)", (word,))
+    if cursor.fetchone():
+        print(f"The word '{word}' is already in your list!")
+        conn.close()
+        return
 
-    # NEW API LOGIC
+    # 2. Fetch API Info
     print(f"🔍 Fetching info for '{word}'...")
     api_info = get_word_info(word)
 
-    new_entry = {
-        "word": word,
-        "translation": translation,
-        "phonetic": api_info["phonetic"] if api_info else "N/A",
-        "definition": api_info["definition"] if api_info else "N/A",
-        "example": api_info["example"] if api_info else "N/A",
-        "last_studied": None
-    }
+    # 3. Insert into the database
+    cursor.execute('''
+        INSERT INTO words (word, translation, phonetic, definition, example, last_studied)
+        VALUES (?, ?, ?, ?, ?, ?)
+    ''', (
+        word,
+        translation,
+        api_info["phonetic"] if api_info else "N/A",
+        api_info["definition"] if api_info else "N/A",
+        api_info["example"] if api_info else "N/A",
+        None
+    ))
 
-    words.append(new_entry)
-    save_words(words)
+    conn.commit()
+    conn.close()
     print(f"✅ Successfully added '{word}'.")
 
 
 def list_words():
     """Display all saved words."""
-    words = load_words()
-    if not words:
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    # Use SELECT to grab only the columns need to display
+    cursor.execute("SELECT word, translation, definition FROM words")
+    rows = cursor.fetchall()
+
+    if not rows:
         print("Your word list is empty. Add some words first!")
+        conn.close()
         return
 
     print("\n📚 Your Saved Words:")
     print("-" * 40)
-    for entry in words:
-        # Use .get() here to safely handle words added in Phase 1
-        w = entry.get("word", "Unknown")
-        t = entry.get("translation", "N/A")
-        d = entry.get("definition", "N/A")
-        print(f"- {w} ({t}): {d}")
+    for row in rows:
+        # Thanks to row_factory, this looks exactly like old JSON dictionary
+        print(f"- {row['word']} ({row['translation']}): {row['definition']}")
     print("-" * 40)
+    conn.close()
 
 
 def show_word(word):
     """Show all details for a specific word."""
-    words = load_words()
+    conn = get_connection()
+    cursor = conn.cursor()
 
-    for entry in words:
-        if entry.get("word", "").lower() == word.lower():
-            print(f"\n📖 Details for '{entry.get('word')}':")
-            print("-" * 30)
-            print(f"Translation  : {entry.get('translation', 'N/A')}")
-            print(f"Phonetic     : {entry.get('phonetic', 'N/A')}")
-            print(f"Definition   : {entry.get('definition', 'N/A')}")
-            print(f"Example      : {entry.get('example', 'N/A')}")
-            print(f"Last Studied : {entry.get('last_studied', 'N/A')}")
-            print("-" * 30)
-            return
+    # Use WHERE to find the exact word, making it case-insensitive
+    cursor.execute("SELECT * FROM words WHERE LOWER(word) = LOWER(?)", (word,))
+    row = cursor.fetchone()
 
-    print(f"⚠️ The word '{word}' was not found in your list.")
+    if row:
+        print(f"\n📖 Details for '{row['word']}':")
+        print("-" * 30)
+        print(f"Translation  : {row['translation']}")
+        print(f"Phonetic     : {row['phonetic']}")
+        print(f"Definition   : {row['definition']}")
+        print(f"Example      : {row['example']}")
+        print(f"Last Studied : {row['last_studied']}")
+        print("-" * 30)
+    else:
+        print(f"⚠️ The word '{word}' was not found in your list.")
+
+    conn.close()
 
 
 def delete_word(word):
     """Delete a word from the saved list."""
-    words = load_words()
+    conn = get_connection()
+    cursor = conn.cursor()
 
-    # Record the initial length to check later
-    initial_count = len(words)
-
-    # List comprehension: Keep only the words that DO NOT match the target word
-    # Use .lower() to make the deletion case-insensitive
-    words = [entry for entry in words if entry["word"].lower() != word.lower()]
-
-    if len(words) == initial_count:
+    # First, check if the word exists and give good user feedback
+    cursor.execute("SELECT id FROM words WHERE LOWER(word) = LOWER(?)", (word,))
+    if not cursor.fetchone():
         print(f"The word '{word}' was not found in your list.")
-    else:
-        save_words(words)
-        print(f"✅ Successfully deleted '{word}'.")
+        conn.close()
+        return
+
+    # Then, delete it
+    cursor.execute("DELETE FROM words WHERE LOWER(word) = LOWER(?)", (word,))
+    conn.commit()
+    conn.close()
+    print(f"✅ Successfully deleted '{word}'.")
 
 
 def study_words():
     """Start an interactive study session with words."""
-    words = load_words()
+    conn = get_connection()
+    cursor = conn.cursor()
 
-    if not words:
+    # THE MAGIC OF SQL:
+    # Ask the database to sort by last_studied, put NULLs (never studied) first, and only give 10 results
+    cursor.execute('''
+        SELECT * FROM words
+        ORDER BY last_studied ASC NULLS FIRST 
+        LIMIT 10
+    ''')
+    study_list = cursor.fetchall()
+
+    if not study_list:
         print("Your word list is empty. Add some words first!")
+        conn.close()
         return
-
-    # Helper function to sort words by last_studied date
-    def get_sort_key(entry):
-        date_str = entry.get("last_studied")
-        if not date_str or date_str == "N/A":
-            # If it has never been studied, treat it as very old so it appears first
-            return "0000-00-00 00:00:00"
-        return date_str
-
-    # Sort the list: oldest (or never studied) words come first
-    words.sort(key=get_sort_key)
-
-    # Pick the top 10 words
-    study_list = words[:10]
 
     print(f"\n🎓 Starting Study Session ({len(study_list)} words)")
     print("Try to remember the translation and meaning. Press ENTER to reveal.")
     print("Type 'q' and press ENTER at any time to quit early.")
     print("=" * 50)
 
-    for i, entry in enumerate(study_list):
-        word = entry.get("word", "Unknown")
-        print(f"\nWord {i + 1}/{len(study_list)}: -> ** {word.upper()} ** <-")
+    for i, row in enumerate(study_list):
+        print(f"\nWord {i + 1}/{len(study_list)}: -> ** {row['word'].upper()} ** <-")
 
-        # Pause and wait for user
         user_input = input("\nPress Enter to reveal answer...")
         if user_input.lower() == 'q':
             print("\nEnding study session early. Great job today!")
             break
 
-        print(f"Translation  : {entry.get('translation', 'N/A')}")
-        print(f"Phonetic     : {entry.get('phonetic', 'N/A')}")
-        print(f"Definition   : {entry.get('definition', 'N/A')}")
-        print(f"Example      : {entry.get('example', 'N/A')}")
+        print(f"Translation  : {row['translation']}")
+        print(f"Phonetic     : {row['phonetic']}")
+        print(f"Definition   : {row['definition']}")
+        print(f"Example      : {row['example']}")
         print("-" * 50)
 
-        # Update the timestamp using ISO format (e.g., "2026-03-06T12:00:00")
-        entry["last_studied"] = datetime.now().isoformat()
+        # Update the timestamp for THIS specific word using its unique ID
+        now = datetime.now().isoformat()
+        cursor.execute('''
+            UPDATE words
+            SET last_studied = ?
+            WHERE id = ?
+        ''', (now, row['id']))
 
-    # Save the master list (which now has updated timestamps) back to the JSON file
-    save_words(words)
+    # Commit the updates at the very end
+    conn.commit()
+    conn.close()
     print("\n✅ Study session complete! Progress saved.")

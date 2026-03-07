@@ -12,5 +12,6 @@ wheels/
 # IDE
 .idea/
 
-# Data (Phase 1)
+# Data (Phase 2)
+words.db
 words.json

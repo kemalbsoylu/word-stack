@@ -16,12 +16,12 @@ Instead of dropping the final, complex code on you, this project is built in **T
 * **Concepts:** `argparse` for CLI commands, reading/writing `json` files for storage, and basic project structure using `uv`.
 * **Features:** Add a word, view saved words, delete words.
 
-### 🛠️ Phase 2: The "Real World" Integration (Current Phase)
+### ✅ Phase 2: The "Real World" Integration (Completed)
 * **Goal:** Connect to the internet and upgrade our data storage.
 * **Concepts:** Making HTTP requests to free public APIs, parsing complex JSON responses, and migrating from simple JSON files to a relational `SQLite` database.
 * **Features:** Fetch word definitions automatically, track the "last studied" date, and filter 10 words a day to study.
 
-### 🚀 Phase 3: Professional Standards (Coming Soon)
+### 🛠️ Phase 3: Professional Standards (Current Phase)
 * **Goal:** Make the tool robust, pretty, and installable by anyone.
 * **Concepts:** Environment variables (`.env`), unit testing with `pytest`, adding a beautiful UI (loading bars, tables), and packaging the tool so it can be installed globally.
 
@@ -39,10 +39,10 @@ Make sure you have [uv](https://docs.astral.sh/uv/) installed on your system.
 
 ### Installation
 Clone this repository to your machine:
-   ```bash
-   git clone https://github.com/kemalbsoylu/word-stack-cli.git
-   cd word-stack-cli
-   ```
+```bash
+git clone https://github.com/kemalbsoylu/word-stack-cli.git
+cd word-stack-cli
+```
    
 ### Commands
 
