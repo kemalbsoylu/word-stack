@@ -5,4 +5,5 @@ description = "An educational CLI tool to save and study English words."
 requires-python = ">=3.12"
 dependencies = [
     "requests>=2.32.5",
+    "rich>=14.3.3",
 ]

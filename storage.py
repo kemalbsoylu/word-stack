@@ -2,6 +2,11 @@ import sqlite3
 
 from datetime import datetime
 from api import get_word_info
+from rich.console import Console
+from rich.table import Table
+
+# Initialize the rich console
+console = Console()
 
 # Our new database file
 DB_FILE = "words.db"
@@ -84,16 +89,25 @@ def list_words():
     rows = cursor.fetchall()
 
     if not rows:
-        print("Your word list is empty. Add some words first!")
+        # Use simple markup tags like [yellow] for colors
+        console.print("[yellow]Your word list is empty. Add some words first![/yellow]")
         conn.close()
         return
 
-    print("\n📚 Your Saved Words:")
-    print("-" * 40)
+    # Create the Rich Table
+    table = Table(title="📚 Your Saved Words", show_header=True, header_style="bold magenta")
+
+    # Define columns
+    table.add_column("Word", style="cyan", width=15)
+    table.add_column("Translation", style="green", width=15)
+    table.add_column("Definition", style="white")
+
+    # Add rows to the table
     for row in rows:
-        # Thanks to row_factory, this looks exactly like old JSON dictionary
-        print(f"- {row['word']} ({row['translation']}): {row['definition']}")
-    print("-" * 40)
+        table.add_row(row['word'], row['translation'], row['definition'])
+
+    # Print the table instead of standard text
+    console.print(table)
     conn.close()
 
 
