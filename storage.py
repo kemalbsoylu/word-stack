@@ -253,7 +253,10 @@ def study_words():
 
         # Pause before the next word, unless it's the very last one
         if i < len(study_list) - 1:
-            console.input("\n[dim]Press Enter for the next word...[/dim]")
+            next_action = console.input("\n[dim]Press Enter for the next word (or 'q' to quit)...[/dim] ")
+            if next_action.lower() == 'q':
+                console.print("\n[bold yellow]Ending study session early. Great job today![/bold yellow]")
+                break
 
     # Commit the updates at the very end
     conn.commit()
