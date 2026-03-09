@@ -4,6 +4,7 @@ from datetime import datetime
 from api import get_word_info
 from rich.console import Console
 from rich.table import Table
+from rich.panel import Panel
 
 # Initialize the rich console
 console = Console()
@@ -107,7 +108,9 @@ def list_words():
         table.add_row(row['word'], row['translation'], row['definition'])
 
     # Print the table instead of standard text
+    console.print()
     console.print(table)
+    console.print()
     conn.close()
 
 
@@ -121,16 +124,28 @@ def show_word(word):
     row = cursor.fetchone()
 
     if row:
-        print(f"\n📖 Details for '{row['word']}':")
-        print("-" * 30)
-        print(f"Translation  : {row['translation']}")
-        print(f"Phonetic     : {row['phonetic']}")
-        print(f"Definition   : {row['definition']}")
-        print(f"Example      : {row['example']}")
-        print(f"Last Studied : {row['last_studied']}")
-        print("-" * 30)
+        # Build a single formatted string with markup tags for the content
+        content = (
+            f"[bold cyan]Translation :[/bold cyan] {row['translation']}\n"
+            f"[bold cyan]Phonetic    :[/bold cyan] {row['phonetic']}\n"
+            f"[bold cyan]Definition  :[/bold cyan] {row['definition']}\n"
+            f"[bold cyan]Example     :[/bold cyan] {row['example']}\n"
+            f"[bold cyan]Last Studied:[/bold cyan] {row['last_studied']}"
+        )
+
+        # Wrap it in a Panel (expand=False keeps the box wrapped tightly around the text)
+        card = Panel(
+            content,
+            title=f"📖 [bold magenta]{row['word'].upper()}[/bold magenta]",
+            border_style="blue",
+            expand=False
+        )
+
+        console.print()  # Add a blank line for breathing room
+        console.print(card)
+        console.print()
     else:
-        print(f"⚠️ The word '{word}' was not found in your list.")
+        console.print(f"[bold red]⚠️ The word '{word}' was not found in your list.[/bold red]")
 
     conn.close()
 
