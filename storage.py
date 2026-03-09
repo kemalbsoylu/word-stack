@@ -158,7 +158,7 @@ def delete_word(word):
     # First, check if the word exists and give good user feedback
     cursor.execute("SELECT id FROM words WHERE LOWER(word) = LOWER(?)", (word,))
     if not cursor.fetchone():
-        print(f"The word '{word}' was not found in your list.")
+        console.print(f"[bold yellow]⚠️ The word '{word}' was not found in your list.[/bold yellow]")
         conn.close()
         return
 
@@ -166,7 +166,7 @@ def delete_word(word):
     cursor.execute("DELETE FROM words WHERE LOWER(word) = LOWER(?)", (word,))
     conn.commit()
     conn.close()
-    print(f"✅ Successfully deleted '{word}'.")
+    console.print(f"[bold green]✅ Successfully deleted '{word}'.[/bold green]")
 
 
 def study_words():
