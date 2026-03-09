@@ -81,10 +81,20 @@ uv run main.py study
 uv run main.py delete "equilibrium"
 ```
 
-## 🤝 Community & Future Improvements
+### Running Tests
+This project includes automated tests to ensure everything works correctly without breaking existing features. To run the test suite (which includes mocked API responses):
+```bash
+uv run pytest
+```
 
-This project is built for learning, which means it is a great place to make your first open-source contribution! 
+---
 
-While we are manually adding translations right now, a fantastic future feature would be **Automatic Translation**. 
-* **The Idea:** If a user only types `uv run main.py add "apple"`, the tool could automatically detect their system language (or accept a configured user choice) and fetch the translation from a free translation API.
-* **Want to build this?** Once we finish Phase 3 and establish our testing guidelines, we will open this up for community contributions!
+## 🤝 Community & Future Improvements (Good First Issues)
+
+This project is built for learning, which means it is a great place to make your first open-source contribution! Here are a few fantastic features waiting to be built:
+
+* **1. Automatic Translation:** If a user only types `uv run main.py add "apple"`, the tool could automatically detect their system language (or accept a configured user choice) and fetch the translation from a free translation API.
+* **2. Data Syncing (`sync` command):** If a user added words back in Phase 1 before we had an API, those words are missing definitions. A new command like `uv run main.py sync "apple"` could re-fetch the data from the internet and `UPDATE` the database row.
+* **3. List Pagination:** As the database grows, printing hundreds of words to the terminal becomes messy. Adding a flag to the list command (e.g., `uv run main.py list --page 2`) using SQL `LIMIT` and `OFFSET` would be a great database scaling challenge.
+
+Once we complete Phase 3, we will add a formal `CONTRIBUTING.md` guide. Until then, feel free to explore the code!
