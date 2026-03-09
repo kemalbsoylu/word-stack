@@ -1,6 +1,6 @@
 [project]
 name = "word-stack-cli"
-version = "0.1.0"
+version = "1.0.0"
 description = "An educational CLI tool to save and study English words."
 requires-python = ">=3.12"
 dependencies = [
@@ -9,3 +9,13 @@ dependencies = [
     "rich>=14.3.3",
     "rich-argparse>=1.7.2",
 ]
+
+[project.scripts]
+word-stack = "main:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["."]

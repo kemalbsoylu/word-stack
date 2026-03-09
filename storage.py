@@ -2,6 +2,7 @@ import os
 import sqlite3
 
 from datetime import datetime
+from pathlib import Path
 from api import get_word_info
 from rich.console import Console
 from rich.table import Table
@@ -10,8 +11,15 @@ from rich.panel import Panel
 # Initialize the rich console
 console = Console()
 
-# Our new database file
-DB_FILE = "words.db"
+# New centralized database logic
+# Get the user's home directory
+APP_DIR = Path.home() / ".word-stack"
+
+# Create the hidden folder if it doesn't exist yet
+APP_DIR.mkdir(parents=True, exist_ok=True)
+
+# Set the database file inside that hidden folder
+DB_FILE = APP_DIR / "words.db"
 
 
 def get_connection():
