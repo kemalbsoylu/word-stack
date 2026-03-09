@@ -1,3 +1,4 @@
+import os
 import sqlite3
 
 from datetime import datetime
@@ -43,6 +44,18 @@ def init_db():
 
 # Run this automatically when storage.py is imported
 init_db()
+
+
+def format_date(iso_string):
+    """Convert an ISO timestamp into human-readable date."""
+    if not iso_string or iso_string == "N/A":
+        return "Never studied"
+    try:
+        dt = datetime.fromisoformat(iso_string)
+        # Format: Mar 09, 2026 at 12:00 PM
+        return dt.strftime("%b %d, %Y at %I:%M %p")
+    except ValueError:
+        return iso_string
 
 
 def add_word(word, translation):
@@ -130,7 +143,7 @@ def show_word(word):
             f"[bold cyan]Phonetic    :[/bold cyan] {row['phonetic']}\n"
             f"[bold cyan]Definition  :[/bold cyan] {row['definition']}\n"
             f"[bold cyan]Example     :[/bold cyan] {row['example']}\n"
-            f"[bold cyan]Last Studied:[/bold cyan] {row['last_studied']}"
+            f"[bold cyan]Last Studied:[/bold cyan] {format_date(row['last_studied'])}"
         )
 
         # Wrap it in a Panel (expand=False keeps the box wrapped tightly around the text)
@@ -184,28 +197,51 @@ def study_words():
     study_list = cursor.fetchall()
 
     if not study_list:
-        print("Your word list is empty. Add some words first!")
+        console.print("[bold yellow]Your word list is empty. Add some words first![/bold yellow]")
         conn.close()
         return
 
-    print(f"\n🎓 Starting Study Session ({len(study_list)} words)")
-    print("Try to remember the translation and meaning. Press ENTER to reveal.")
-    print("Type 'q' and press ENTER at any time to quit early.")
-    print("=" * 50)
+    # Intro screen
+    os.system('cls' if os.name == 'nt' else 'clear')
+    console.print(f"\n[bold magenta]🎓 Starting Study Session ({len(study_list)} words)[/bold magenta]")
+    console.print("Try to remember the translation and meaning.")
+    console.input("\n[dim]Press Enter to begin...[/dim]")
 
     for i, row in enumerate(study_list):
-        print(f"\nWord {i + 1}/{len(study_list)}: -> ** {row['word'].upper()} ** <-")
+        # Clear the terminal for a clean flashcard experience
+        os.system('cls' if os.name == 'nt' else 'clear')
 
-        user_input = input("\nPress Enter to reveal answer...")
+        # 1. The Question Panel (Front of flashcard)
+        front = Panel(
+            f"[bold white]Word {i + 1} of {len(study_list)}[/bold white]",
+            title=f"🤔 [bold cyan]{row['word'].upper()}[/bold cyan]",
+            border_style="cyan",
+            expand=False
+        )
+        console.print(front)
+
+        # Wait for the user to guess
+        user_input = console.input("\n[dim]Press Enter to reveal answer (or 'q' to quit)...[/dim] ")
         if user_input.lower() == 'q':
-            print("\nEnding study session early. Great job today!")
+            console.print("\n[bold yellow]Ending study session early. Great job today![/bold yellow]")
             break
 
-        print(f"Translation  : {row['translation']}")
-        print(f"Phonetic     : {row['phonetic']}")
-        print(f"Definition   : {row['definition']}")
-        print(f"Example      : {row['example']}")
-        print("-" * 50)
+        # 2. The Answer Panel (Back of flashcard)
+        back_content = (
+            f"[bold green]Translation :[/bold green] {row['translation']}\n"
+            f"[bold green]Phonetic    :[/bold green] {row['phonetic']}\n"
+            f"[bold green]Definition  :[/bold green] {row['definition']}\n"
+            f"[bold green]Example     :[/bold green] {row['example']}\n\n"
+            f"[dim]Previously Studied: {format_date(row['last_studied'])}[/dim]"
+        )
+
+        back = Panel(
+            back_content,
+            title=f"💡 [bold green]Answer[/bold green]",
+            border_style="green",
+            expand=False
+        )
+        console.print(back)
 
         # Update the timestamp for THIS specific word using its unique ID
         now = datetime.now().isoformat()
@@ -215,7 +251,11 @@ def study_words():
             WHERE id = ?
         ''', (now, row['id']))
 
+        # Pause before the next word, unless it's the very last one
+        if i < len(study_list) - 1:
+            console.input("\n[dim]Press Enter for the next word...[/dim]")
+
     # Commit the updates at the very end
     conn.commit()
     conn.close()
-    print("\n✅ Study session complete! Progress saved.")
+    console.print("\n[bold green]✅ Study session complete! Progress saved.[/bold green]")
