@@ -53,13 +53,13 @@ def add_word(word, translation):
     # Use parameterized queries (?) to prevent SQL Injection attacks
     cursor.execute("SELECT word FROM words WHERE LOWER(word) = LOWER(?)", (word,))
     if cursor.fetchone():
-        print(f"The word '{word}' is already in your list!")
+        console.print(f"[bold yellow]The word '{word}' is already in your list![/bold yellow]")
         conn.close()
         return
 
     # 2. Fetch API Info
-    print(f"🔍 Fetching info for '{word}'...")
-    api_info = get_word_info(word)
+    with console.status(f"[bold cyan]🔍 Fetching info for '{word}' from the internet...[/bold cyan]", spinner="dots"):
+        api_info = get_word_info(word)
 
     # 3. Insert into the database
     cursor.execute('''
@@ -76,7 +76,7 @@ def add_word(word, translation):
 
     conn.commit()
     conn.close()
-    print(f"✅ Successfully added '{word}'.")
+    console.print(f"[bold green]✅ Successfully added '{word}'.[/bold green]")
 
 
 def list_words():
