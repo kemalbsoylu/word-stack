@@ -44,6 +44,14 @@ git clone https://github.com/kemalbsoylu/word-stack-cli.git
 cd word-stack-cli
 uv tool install .
 ```
+
+### Updating the Tool
+To get the latest features and bug fixes from the community, navigate to your cloned repository, pull the latest changes, and force the re-installation:
+```bash
+cd word-stack-cli
+git pull
+uv tool install --force .
+```
    
 ### Commands
 

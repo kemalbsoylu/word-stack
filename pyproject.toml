@@ -1,6 +1,6 @@
 [project]
 name = "word-stack-cli"
-version = "1.0.0"
+version = "1.0.1"
 description = "An educational CLI tool to save and study English words."
 requires-python = ">=3.12"
 dependencies = [
