@@ -1,11 +1,15 @@
 import argparse
 
+from rich_argparse import RichHelpFormatter
 from storage import add_word, list_words, show_word, delete_word, study_words
 
 
 def main():
-    # 1. Initialize the parser
-    parser = argparse.ArgumentParser(description="Word-Stack-CLI: Your personal vocabulary builder.")
+    # 1. Initialize the parser with the Rich formatter
+    parser = argparse.ArgumentParser(
+        description="Word-Stack-CLI: Your personal vocabulary builder.",
+        formatter_class=RichHelpFormatter  # <-- NEW LINE
+    )
 
     # 2. Create subcommands
     subparsers = parser.add_subparsers(dest="command", help="Available commands")

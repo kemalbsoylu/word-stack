@@ -157,10 +157,16 @@ def show_word(word):
         console.print()  # Add a blank line for breathing room
         console.print(card)
         console.print()
+        conn.close()
     else:
-        console.print(f"[bold red]⚠️ The word '{word}' was not found in your list.[/bold red]")
+        # Close the connection early since we didn't find the word
+        conn.close()
+        console.print(f"\n[bold yellow]⚠️ The word '{word}' was not found in your list.[/bold yellow]")
 
-    conn.close()
+        choice = console.input(f"[dim]Would you like to search the dictionary and add '{word}' now? (y/n): [/dim]")
+        if choice.lower() == 'y':
+            console.print()  # Add a blank line for spacing
+            add_word(word, "N/A")  # Call existing function, defaulting translation to N/A
 
 
 def delete_word(word):
