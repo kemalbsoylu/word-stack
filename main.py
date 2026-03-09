@@ -1,14 +1,16 @@
 import argparse
 
 from rich_argparse import RichHelpFormatter
-from storage import add_word, list_words, show_word, delete_word, study_words
+from storage import add_word, list_words, show_word, delete_word, study_words, has_studied_today
 
 
 def main():
+    status_msg = "✅ You have studied today!" if has_studied_today() else "❌ You haven't studied today yet."
+
     # 1. Initialize the parser with the Rich formatter
     parser = argparse.ArgumentParser(
-        description="Word-Stack-CLI: Your personal vocabulary builder.",
-        formatter_class=RichHelpFormatter  # <-- NEW LINE
+        description=f"Word-Stack-CLI: Your personal vocabulary builder.\nDaily Status: {status_msg}",
+        formatter_class=RichHelpFormatter
     )
 
     # 2. Create subcommands

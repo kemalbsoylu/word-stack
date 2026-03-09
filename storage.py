@@ -58,6 +58,27 @@ def format_date(iso_string):
         return iso_string
 
 
+def has_studied_today():
+    """Check the database to see if any word was studied today."""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    # Use MAX() to find the most recent study time in the whole database
+    cursor.execute("SELECT MAX(last_studied) FROM words")
+    row = cursor.fetchone()
+    conn.close()
+
+    if row and row[0]:
+        last_studied_iso = row[0]
+        if last_studied_iso != "N/A":
+            # Extract just the YYYY-MM-DD part from the ISO string
+            last_date = last_studied_iso.split("T")[0]
+            today_date = datetime.now().date().isoformat()
+            return last_date == today_date
+
+    return False
+
+
 def add_word(word, translation):
     """Add a new word and its translation to the database."""
     conn = get_connection()
@@ -108,6 +129,12 @@ def list_words():
         conn.close()
         return
 
+    # Show status badge
+    if has_studied_today():
+        console.print("\n[bold green]✅ Daily Goal: You have studied today![/bold green]")
+    else:
+        console.print("\n[bold yellow]⚠️ Daily Goal: You haven't studied today yet. Run 'study'![/bold yellow]")
+
     # Create the Rich Table
     table = Table(title="📚 Your Saved Words", show_header=True, header_style="bold magenta")
 
@@ -121,7 +148,6 @@ def list_words():
         table.add_row(row['word'], row['translation'], row['definition'])
 
     # Print the table instead of standard text
-    console.print()
     console.print(table)
     console.print()
     conn.close()
@@ -210,6 +236,10 @@ def study_words():
     # Intro screen
     os.system('cls' if os.name == 'nt' else 'clear')
     console.print(f"\n[bold magenta]🎓 Starting Study Session ({len(study_list)} words)[/bold magenta]")
+
+    if has_studied_today():
+        console.print("[bold cyan]🌟 You already studied today, but extra practice is always great![/bold cyan]\n")
+
     console.print("Try to remember the translation and meaning.")
     console.input("\n[dim]Press Enter to begin...[/dim]")
 
