@@ -1,4 +1,7 @@
 from unittest.mock import patch
+
+import pytest
+
 from word_stack.api import get_word_info
 
 
@@ -36,8 +39,6 @@ def test_get_word_info_not_found(mock_get):
     # Simulate the API returning a 404 error
     mock_get.return_value.status_code = 404
 
-    # Call the function with a gibberish word
-    result = get_word_info("notarealword123")
-
-    # Function should gracefully return None
-    assert result is None
+    # Tell pytest that we EXPECT a ValueError to be raised here
+    with pytest.raises(ValueError, match="not_found"):
+        get_word_info("notarealword123")
