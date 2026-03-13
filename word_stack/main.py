@@ -2,7 +2,8 @@ import argparse
 import importlib.metadata
 
 from rich_argparse import RawDescriptionRichHelpFormatter
-from word_stack.storage import add_word, list_words, show_word, delete_word, study_words, has_studied_today
+from word_stack.storage import add_word, list_words, show_word, delete_word, study_words, has_studied_today, \
+    add_multiple_words
 
 
 def get_version():
@@ -29,6 +30,9 @@ def main():
     add_parser.add_argument("word", type=str, help="The English word")
     add_parser.add_argument("translation", type=str, nargs="?", default="N/A", help="Optional translation")
 
+    bulk_parser = subparsers.add_parser("bulk", help="Add multiple words at once (e.g., word-stack bulk apple banana)")
+    bulk_parser.add_argument("words", type=str, nargs="+", help="List of English words separated by spaces")
+
     list_parser = subparsers.add_parser("list", help="List latest saved words")
     list_parser.add_argument("-l", "--limit", type=int, default=10, help="Number of latest words to show (default: 10)")
 
@@ -44,6 +48,8 @@ def main():
 
     if args.command == "add":
         add_word(args.word, args.translation)
+    elif args.command == "bulk":
+        add_multiple_words(args.words)
     elif args.command == "list":
         list_words(args.limit)
     elif args.command == "show":

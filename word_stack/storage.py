@@ -7,6 +7,7 @@ from word_stack.api import get_word_info
 from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
+from rich.progress import Progress
 
 console = Console()
 
@@ -119,6 +120,72 @@ def add_word(word, translation="N/A"):
     conn.commit()
     conn.close()
     console.print(f"[bold green]✅ Successfully added '{word}'.[/bold green]")
+
+
+def add_multiple_words(words):
+    """Add multiple words at once with a progress bar and summary."""
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    added = []
+    skipped = []
+    not_found = []
+    errors = []
+
+    unique_words = list(dict.fromkeys(words))
+
+    console.print()
+
+    with Progress(console=console) as progress:
+        task = progress.add_task("[cyan]Processing words...", total=len(unique_words))
+
+        for word in unique_words:
+            progress.update(task, description=f"[cyan]Fetching '{word}'...")
+
+            cursor.execute("SELECT word FROM words WHERE LOWER(word) = LOWER(?)", (word,))
+            if cursor.fetchone():
+                skipped.append(word)
+                progress.advance(task)
+                continue
+
+            try:
+                api_info = get_word_info(word)
+
+                cursor.execute('''
+                    INSERT INTO words (word, translation, phonetic, definition, example, last_studied)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                ''', (
+                    word,
+                    "N/A",
+                    api_info["phonetic"],
+                    api_info["definition"],
+                    api_info["example"],
+                    None
+                ))
+                conn.commit()
+                added.append(word)
+
+            except ValueError:
+                not_found.append(word)
+            except ConnectionError:
+                errors.append(word)
+
+            progress.advance(task)
+
+    conn.close()
+
+    console.print("\n[bold magenta]Summary[/bold magenta]")
+
+    if added:
+        console.print(f"[bold green]✅ Added ({len(added)}):[/bold green] {', '.join(added)}")
+    if skipped:
+        console.print(f"[bold yellow]⏭️  Skipped - already saved ({len(skipped)}):[/bold yellow] {', '.join(skipped)}")
+    if not_found:
+        console.print(f"[bold red]❌ Not Found ({len(not_found)}):[/bold red] {', '.join(not_found)}")
+    if errors:
+        console.print(f"[bold red]⚠️  Network Errors ({len(errors)}):[/bold red] {', '.join(errors)}")
+
+    console.print()
 
 
 def list_words(count=10):
