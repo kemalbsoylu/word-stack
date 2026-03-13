@@ -8,24 +8,18 @@ from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
 
-# Initialize the rich console
 console = Console()
 
-# New centralized database logic
-# Get the user's home directory
 APP_DIR = Path.home() / ".word-stack"
 
-# Create the hidden folder if it doesn't exist yet
 APP_DIR.mkdir(parents=True, exist_ok=True)
 
-# Set the database file inside that hidden folder
 DB_FILE = APP_DIR / "words.db"
 
 
 def get_connection():
     """Create and return a database connection."""
     conn = sqlite3.connect(DB_FILE)
-    # This makes SQLite return rows that act like Python dictionaries
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -35,7 +29,6 @@ def init_db():
     conn = get_connection()
     cursor = conn.cursor()
 
-    # Define schema (the structure of the data)
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS words ( 
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -50,7 +43,7 @@ def init_db():
     conn.commit()
     conn.close()
 
-# Run this automatically when storage.py is imported
+
 init_db()
 
 
@@ -71,7 +64,6 @@ def has_studied_today():
     conn = get_connection()
     cursor = conn.cursor()
 
-    # Use MAX() to find the most recent study time in the whole database
     cursor.execute("SELECT MAX(last_studied) FROM words")
     row = cursor.fetchone()
     conn.close()
@@ -79,7 +71,6 @@ def has_studied_today():
     if row and row[0]:
         last_studied_iso = row[0]
         if last_studied_iso != "N/A":
-            # Extract just the YYYY-MM-DD part from the ISO string
             last_date = last_studied_iso.split("T")[0]
             today_date = datetime.now().date().isoformat()
             return last_date == today_date
@@ -92,19 +83,15 @@ def add_word(word, translation):
     conn = get_connection()
     cursor = conn.cursor()
 
-    # 1. Check if the word already exists
-    # Use parameterized queries (?) to prevent SQL Injection attacks
     cursor.execute("SELECT word FROM words WHERE LOWER(word) = LOWER(?)", (word,))
     if cursor.fetchone():
         console.print(f"[bold yellow]The word '{word}' is already in your list![/bold yellow]")
         conn.close()
         return
 
-    # 2. Fetch API Info
     with console.status(f"[bold cyan]🔍 Fetching info for '{word}' from the internet...[/bold cyan]", spinner="dots"):
         api_info = get_word_info(word)
 
-    # 3. Insert into the database
     cursor.execute('''
         INSERT INTO words (word, translation, phonetic, definition, example, last_studied)
         VALUES (?, ?, ?, ?, ?, ?)
@@ -122,41 +109,48 @@ def add_word(word, translation):
     console.print(f"[bold green]✅ Successfully added '{word}'.[/bold green]")
 
 
-def list_words():
-    """Display all saved words."""
+def list_words(count=10):
+    """Display latest saved words, newest first."""
     conn = get_connection()
     cursor = conn.cursor()
 
-    # Use SELECT to grab only the columns need to display
-    cursor.execute("SELECT word, translation, definition FROM words")
-    rows = cursor.fetchall()
+    cursor.execute("SELECT COUNT(*) FROM words")
+    total_words = cursor.fetchone()[0]
 
-    if not rows:
-        # Use simple markup tags like [yellow] for colors
+    if total_words == 0:
         console.print("[yellow]Your word list is empty. Add some words first![/yellow]")
         conn.close()
         return
 
-    # Show status badge
-    if has_studied_today():
-        console.print("\n[bold green]✅ Daily Goal: You have studied today![/bold green]")
-    else:
-        console.print("\n[bold yellow]⚠️ Daily Goal: You haven't studied today yet. Run 'study'![/bold yellow]")
+    cursor.execute("SELECT word, translation, definition FROM words ORDER BY id DESC LIMIT ?", (count,))
+    rows = cursor.fetchall()
 
-    # Create the Rich Table
-    table = Table(title="📚 Your Saved Words", show_header=True, header_style="bold magenta")
+    display_count = len(rows)
 
-    # Define columns
+    table = Table(title=f"📚 Your Latest {display_count} Words (Total: {total_words})", show_header=True, header_style="bold magenta")
+
     table.add_column("Word", style="cyan", width=15)
     table.add_column("Translation", style="green", width=15)
     table.add_column("Definition", style="white")
 
-    # Add rows to the table
     for row in rows:
         table.add_row(row['word'], row['translation'], row['definition'])
 
-    # Print the table instead of standard text
+    console.print()
     console.print(table)
+
+    remaining_words = total_words - display_count
+
+    if remaining_words == 1:
+        console.print(f"[dim]...and {remaining_words} more word hidden.[/dim]")
+    elif remaining_words > 1:
+        console.print(f"[dim]...and {remaining_words} more words hidden.[/dim]")
+
+    if has_studied_today():
+        console.print("\n[bold green]✅ Daily Goal: You have studied today![/bold green]")
+    else:
+        console.print("\n[bold yellow]⚠️  Daily Goal: You haven't studied today yet. Run 'study'![/bold yellow]")
+
     console.print()
     conn.close()
 
@@ -166,12 +160,10 @@ def show_word(word):
     conn = get_connection()
     cursor = conn.cursor()
 
-    # Use WHERE to find the exact word, making it case-insensitive
     cursor.execute("SELECT * FROM words WHERE LOWER(word) = LOWER(?)", (word,))
     row = cursor.fetchone()
 
     if row:
-        # Build a single formatted string with markup tags for the content
         content = (
             f"[bold cyan]Translation :[/bold cyan] {row['translation']}\n"
             f"[bold cyan]Phonetic    :[/bold cyan] {row['phonetic']}\n"
@@ -180,7 +172,6 @@ def show_word(word):
             f"[bold cyan]Last Studied:[/bold cyan] {format_date(row['last_studied'])}"
         )
 
-        # Wrap it in a Panel (expand=False keeps the box wrapped tightly around the text)
         card = Panel(
             content,
             title=f"📖 [bold magenta]{row['word'].upper()}[/bold magenta]",
@@ -188,19 +179,18 @@ def show_word(word):
             expand=False
         )
 
-        console.print()  # Add a blank line for breathing room
+        console.print()
         console.print(card)
         console.print()
         conn.close()
     else:
-        # Close the connection early since we didn't find the word
         conn.close()
         console.print(f"\n[bold yellow]⚠️ The word '{word}' was not found in your list.[/bold yellow]")
 
         choice = console.input(f"[dim]Would you like to search the dictionary and add '{word}' now? (y/n): [/dim]")
         if choice.lower() == 'y':
-            console.print()  # Add a blank line for spacing
-            add_word(word, "N/A")  # Call existing function, defaulting translation to N/A
+            console.print()
+            add_word(word, "N/A")
 
 
 def delete_word(word):
@@ -208,14 +198,12 @@ def delete_word(word):
     conn = get_connection()
     cursor = conn.cursor()
 
-    # First, check if the word exists and give good user feedback
     cursor.execute("SELECT id FROM words WHERE LOWER(word) = LOWER(?)", (word,))
     if not cursor.fetchone():
         console.print(f"[bold yellow]⚠️ The word '{word}' was not found in your list.[/bold yellow]")
         conn.close()
         return
 
-    # Then, delete it
     cursor.execute("DELETE FROM words WHERE LOWER(word) = LOWER(?)", (word,))
     conn.commit()
     conn.close()
@@ -227,8 +215,6 @@ def study_words():
     conn = get_connection()
     cursor = conn.cursor()
 
-    # THE MAGIC OF SQL:
-    # Ask the database to sort by last_studied, put NULLs (never studied) first, and only give 10 results
     cursor.execute('''
         SELECT * FROM words
         ORDER BY last_studied ASC NULLS FIRST 
@@ -241,7 +227,6 @@ def study_words():
         conn.close()
         return
 
-    # Intro screen
     os.system('cls' if os.name == 'nt' else 'clear')
     console.print(f"\n[bold magenta]🎓 Starting Study Session ({len(study_list)} words)[/bold magenta]")
 
@@ -252,10 +237,8 @@ def study_words():
     console.input("\n[dim]Press Enter to begin...[/dim]")
 
     for i, row in enumerate(study_list):
-        # Clear the terminal for a clean flashcard experience
         os.system('cls' if os.name == 'nt' else 'clear')
 
-        # 1. The Question Panel (Front of flashcard)
         front = Panel(
             f"[bold white]Word {i + 1} of {len(study_list)}[/bold white]",
             title=f"🤔 [bold cyan]{row['word'].upper()}[/bold cyan]",
@@ -264,13 +247,11 @@ def study_words():
         )
         console.print(front)
 
-        # Wait for the user to guess
         user_input = console.input("\n[dim]Press Enter to reveal answer (or 'q' to quit)...[/dim] ")
         if user_input.lower() == 'q':
             console.print("\n[bold yellow]Ending study session early. Great job today![/bold yellow]")
             break
 
-        # 2. The Answer Panel (Back of flashcard)
         back_content = (
             f"[bold green]Translation :[/bold green] {row['translation']}\n"
             f"[bold green]Phonetic    :[/bold green] {row['phonetic']}\n"
@@ -287,7 +268,6 @@ def study_words():
         )
         console.print(back)
 
-        # Update the timestamp for THIS specific word using its unique ID
         now = datetime.now().isoformat()
         cursor.execute('''
             UPDATE words
@@ -295,14 +275,12 @@ def study_words():
             WHERE id = ?
         ''', (now, row['id']))
 
-        # Pause before the next word, unless it's the very last one
         if i < len(study_list) - 1:
             next_action = console.input("\n[dim]Press Enter for the next word (or 'q' to quit)...[/dim] ")
             if next_action.lower() == 'q':
                 console.print("\n[bold yellow]Ending study session early. Great job today![/bold yellow]")
                 break
 
-    # Commit the updates at the very end
     conn.commit()
     conn.close()
     console.print("\n[bold green]✅ Study session complete! Progress saved.[/bold green]")

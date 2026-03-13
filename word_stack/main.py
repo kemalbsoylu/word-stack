@@ -29,7 +29,8 @@ def main():
     add_parser.add_argument("word", type=str, help="The English word")
     add_parser.add_argument("translation", type=str, nargs="?", default="N/A", help="Optional translation")
 
-    list_parser = subparsers.add_parser("list", help="List all saved words")
+    list_parser = subparsers.add_parser("list", help="List latest saved words")
+    list_parser.add_argument("-l", "--limit", type=int, default=10, help="Number of latest words to show (default: 10)")
 
     show_parser = subparsers.add_parser("show", help="Show details for a specific word")
     show_parser.add_argument("word", type=str, help="The English word to inspect")
@@ -44,7 +45,7 @@ def main():
     if args.command == "add":
         add_word(args.word, args.translation)
     elif args.command == "list":
-        list_words()
+        list_words(args.limit)
     elif args.command == "show":
         show_word(args.word)
     elif args.command == "delete":
