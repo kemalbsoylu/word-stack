@@ -89,11 +89,18 @@ def add_word(word, translation="N/A"):
         conn.close()
         return
 
-    with console.status(f"[bold cyan]🔍 Fetching info for '{word}' from the internet...[/bold cyan]", spinner="dots"):
-        api_info = get_word_info(word)
+    try:
+        with console.status(f"[bold cyan]🔍 Fetching info for '{word}' from the internet...[/bold cyan]",
+                            spinner="dots"):
+            api_info = get_word_info(word)
 
-    if not api_info:
-        console.print(f"[bold red]❌ '{word}' was not saved because it could not be found in the dictionary.[/bold red]")
+    except ValueError:
+        console.print(f"[bold yellow]⚠️ '{word}' was not saved. It could not be found in the dictionary.[/bold yellow]")
+        conn.close()
+        return
+
+    except ConnectionError as e:
+        console.print(f"[bold red]❌ '{word}' was not saved. Network error![/bold red]")
         conn.close()
         return
 

@@ -1,7 +1,4 @@
 import requests
-from rich.console import Console
-
-console = Console()
 
 
 def get_word_info(word):
@@ -12,14 +9,12 @@ def get_word_info(word):
         response = requests.get(url)
 
         if response.status_code == 404:
-            console.print(f"[bold yellow]⚠️ Could not find extra info for '{word}' on the API.[/bold yellow]")
-            return None
+            raise ValueError("not_found")
 
         response.raise_for_status()
         data = response.json()[0]
 
         phonetic = data.get("phonetic", "N/A")
-
         definition = "No definition found"
         example = "No example found"
 
@@ -36,5 +31,4 @@ def get_word_info(word):
         }
 
     except requests.exceptions.RequestException as e:
-        console.print(f"[bold red]⚠️ Connection error: Could not reach the Dictionary API. ({e})[/bold red]")
-        return None
+        raise ConnectionError(str(e))
