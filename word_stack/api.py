@@ -15,13 +15,11 @@ def get_word_info(word):
             console.print(f"[bold yellow]⚠️ Could not find extra info for '{word}' on the API.[/bold yellow]")
             return None
 
-        response.raise_for_status()  # Check for other errors (e.g., 500)
-        data = response.json()[0]  # The API returns a list, take the first entry
+        response.raise_for_status()
+        data = response.json()[0]
 
-        # Using .get() is safer than square brackets [] to avoid KeyErrors
         phonetic = data.get("phonetic", "N/A")
 
-        # Grab the first meaning
         definition = "No definition found"
         example = "No example found"
 

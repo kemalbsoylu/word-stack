@@ -78,7 +78,7 @@ def has_studied_today():
     return False
 
 
-def add_word(word, translation):
+def add_word(word, translation="N/A"):
     """Add a new word and its translation to the database."""
     conn = get_connection()
     cursor = conn.cursor()
@@ -92,15 +92,20 @@ def add_word(word, translation):
     with console.status(f"[bold cyan]🔍 Fetching info for '{word}' from the internet...[/bold cyan]", spinner="dots"):
         api_info = get_word_info(word)
 
+    if not api_info:
+        console.print(f"[bold red]❌ '{word}' was not saved because it could not be found in the dictionary.[/bold red]")
+        conn.close()
+        return
+
     cursor.execute('''
         INSERT INTO words (word, translation, phonetic, definition, example, last_studied)
         VALUES (?, ?, ?, ?, ?, ?)
     ''', (
         word,
         translation,
-        api_info["phonetic"] if api_info else "N/A",
-        api_info["definition"] if api_info else "N/A",
-        api_info["example"] if api_info else "N/A",
+        api_info["phonetic"],
+        api_info["definition"],
+        api_info["example"],
         None
     ))
 
@@ -149,7 +154,7 @@ def list_words(count=10):
     if has_studied_today():
         console.print("\n[bold green]✅ Daily Goal: You have studied today![/bold green]")
     else:
-        console.print("\n[bold yellow]⚠️  Daily Goal: You haven't studied today yet. Run 'study'![/bold yellow]")
+        console.print("\n[bold yellow]⚠️ Daily Goal: You haven't studied today yet. Run 'study'![/bold yellow]")
 
     console.print()
     conn.close()
