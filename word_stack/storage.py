@@ -11,10 +11,12 @@ from rich.progress import Progress
 
 console = Console()
 
-APP_DIR = Path.home() / ".word-stack"
+if os.getenv("WORD_STACK_ENV") == "development":
+    APP_DIR = Path.cwd() / ".dev_data"
+else:
+    APP_DIR = Path.home() / ".word-stack"
 
 APP_DIR.mkdir(parents=True, exist_ok=True)
-
 DB_FILE = APP_DIR / "words.db"
 
 

@@ -11,3 +11,7 @@ wheels/
 
 # IDE
 .idea/
+
+# Development environments
+.env
+.dev_data/
