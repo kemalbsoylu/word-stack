@@ -209,9 +209,9 @@ wheels = [
 ]
 
 [[package]]
-name = "word-stack-cli"
+name = "word-stack"
 version = "0.1.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "pytest" },
     { name = "requests" },

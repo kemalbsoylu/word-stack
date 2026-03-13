@@ -1,7 +1,7 @@
 import argparse
 
 from rich_argparse import RichHelpFormatter
-from storage import add_word, list_words, show_word, delete_word, study_words, has_studied_today
+from word_stack.storage import add_word, list_words, show_word, delete_word, study_words, has_studied_today
 
 
 def main():

@@ -1,10 +1,9 @@
-import pytest
 from unittest.mock import patch
-from api import get_word_info
+from word_stack.api import get_word_info
 
 
 # The @patch decorator intercepts 'requests.get' inside our api.py file
-@patch("api.requests.get")
+@patch("word_stack.api.requests.get")
 def test_get_word_info_success(mock_get):
     """Test fetching a word successfully using a fake API response."""
 
@@ -30,7 +29,7 @@ def test_get_word_info_success(mock_get):
     assert result["example"] == "Both tests were successful."
 
 
-@patch("api.requests.get")
+@patch("word_stack.api.requests.get")
 def test_get_word_info_not_found(mock_get):
     """Test how the app handles a 404 Not Found error."""
 

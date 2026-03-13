@@ -3,7 +3,7 @@ import sqlite3
 
 from datetime import datetime
 from pathlib import Path
-from api import get_word_info
+from word_stack.api import get_word_info
 from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel

@@ -1,111 +1,58 @@
-# Word-Stack-CLI (An Educational Python Journey)
+# Word-Stack
 
-Welcome to `word-stack-cli`! 
+A sleek, fast, terminal-based vocabulary builder. Add words from your command line, automatically fetch their definitions and pronunciations, and build a daily study habit without ever leaving your terminal.
 
-This repository isn't just a vocabulary tool; it is a **step-by-step educational guide** for Python beginners. If you know the basics of Python (variables, loops, functions) and want to learn how a "real" project is structured, evolved, and packaged, you are in the right place.
+## Features
+* **Lightning Fast:** Built with modern Python and `uv`.
+* **Zero-Friction Adding:** Just type `word-stack add <word>`. The Dictionary API automatically fetches definitions, examples, and phonetics.
+* **Daily Study Mode:** Uses a built-in SQLite database to track your learning and serves you a daily quiz of 10 unstudied words.
+* **Beautiful UI:** Terminal output is fully styled with `rich` for gorgeous tables, panels, and loading animations.
 
-## The Goal
-We are building a Command Line Interface (CLI) tool to save English words, fetch their definitions, and study them daily.
+## Installation
 
-Instead of dropping the final, complex code on you, this project is built in **Three Phases**. By looking at the commit history, you can see exactly how a software project grows from a simple script into a professional package.
+Word-Stack is easily installable globally using `uv`:
 
-## Project Phases
-
-### ✅ Phase 1: The Foundation (Completed)
-* **Goal:** Make it work locally with the simplest tools possible.
-* **Concepts:** `argparse` for CLI commands, reading/writing `json` files for storage, and basic project structure using `uv`.
-* **Features:** Add a word, view saved words, delete words.
-
-### ✅ Phase 2: The "Real World" Integration (Completed)
-* **Goal:** Connect to the internet and upgrade our data storage.
-* **Concepts:** Making HTTP requests to free public APIs, parsing complex JSON responses, and migrating from simple JSON files to a relational `SQLite` database.
-* **Features:** Fetch word definitions automatically, track the "last studied" date, and filter 10 words a day to study.
-
-### ✅ Phase 3: Professional Standards (Completed)
-* **Goal:** Make the tool robust, pretty, and installable by anyone.
-* **Concepts:** Unit testing with `pytest`, adding a beautiful UI (tables, panels, and spinners) with `rich`, and packaging the tool so it runs globally.
-
----
-*Follow the commit history from the beginning to see how this project is built!*
-
----
-
-## Getting Started (How to Use)
-
-Because we are using modern tooling, you don't need to manually create virtual environments or run `pip install`. 
-
-### Prerequisites
-Make sure you have [uv](https://docs.astral.sh/uv/) installed on your system. 
-
-### Installation
-Clone this repository to your machine, then install it globally using `uv`:
 ```bash
-git clone https://github.com/kemalbsoylu/word-stack-cli.git
-cd word-stack-cli
+git clone https://github.com/kemalbsoylu/word-stack.git
+cd word-stack
 uv tool install .
 ```
 
-### Updating the Tool
-To get the latest features and bug fixes from the community, navigate to your cloned repository, pull the latest changes, and force the re-installation:
+*Note: The application creates a local SQLite database safely tucked away in `~/.word-stack/words.db` to keep your system clean.*
+
+## Usage
+
+Once installed, you can use the `word-stack` (or set up an alias like `ws`) from anywhere on your system.
+
+**Add a word (Auto-fetches definition):**
 ```bash
-cd word-stack-cli
-git pull
-uv tool install --force .
-```
-   
-### Commands
-
-Because you installed it globally, you can now run `word-stack` from **anywhere** on your computer! 
-
-*(Note: Your database is safely stored in a hidden folder at `~/.word-stack/words.db`, keeping your file system clean!)*
-
-**1. See all available commands:**
-```bash
-word-stack --help
-```
-
-**2. Add a new word:**
-You can add just the English word, or include a translation in your native language. The tool will automatically fetch the definition and pronunciation from the internet!
-```bash
-word-stack add "unique"
+word-stack add "persevere"
 word-stack add "equilibrium" "denge"
 ```
 
-**3. List all your saved words:**
+**List your saved words:**
 ```bash
 word-stack list
 ```
 
-**4. Show detailed information for a specific word:**
+**View word details:**
 ```bash
-word-stack show "unique"
+word-stack show "persevere"
 ```
 
-**5. Start a daily study session:**
-This pulls up to 10 of your oldest (or unstudied) words and quizzes you on them.
+**Start your daily study session:**
 ```bash
 word-stack study
 ```
 
-**6. Delete a word:**
+**Delete a word:**
 ```bash
-word-stack delete "equilibrium"
-```
-
-### Running Tests
-This project includes automated tests to ensure everything works correctly without breaking existing features. To run the test suite (which includes mocked API responses), navigate to the project folder and run:
-```bash
-uv run pytest
+word-stack delete "persevere"
 ```
 
 ---
 
-## 🤝 Community & Future Improvements (Good First Issues)
+### 🎓 For Python Beginners
+Are you learning Python and want to see exactly how this tool was built? 
 
-This project is built for learning, which means it is a great place to make your first open-source contribution! Here are a few fantastic features waiting to be built:
-
-* **1. Automatic Translation:** If a user only types `word-stack add "apple"`, the tool could automatically detect their system language (or accept a configured user choice) and fetch the translation from a free translation API.
-* **2. Data Syncing (`sync` command):** If a user added words back in Phase 1 before we had an API, those words are missing definitions. A new command like `word-stack sync "apple"` could re-fetch the data from the internet and `UPDATE` the database row.
-* **3. List Pagination:** As the database grows, printing hundreds of words to the terminal becomes messy. Adding a flag to the list command (e.g., `word-stack list --page 2`) using SQL `LIMIT` and `OFFSET` would be a great database scaling challenge.
-
-Feel free to explore the code, fork the repository, and submit a Pull Request!
+This repository is the production version of the tool. If you want to see a step-by-step, 3-phase educational history of how to build a CLI app from scratch, please visit the [Word-Stack-CLI Educational Repository](https://github.com/kemalbsoylu/word-stack-cli). It is designed specifically for beginners to explore and submit their first Open Source contributions!
