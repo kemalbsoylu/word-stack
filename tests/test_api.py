@@ -1,7 +1,7 @@
-from unittest.mock import patch
-
 import pytest
+import requests
 
+from unittest.mock import patch
 from word_stack.api import get_word_info
 
 
@@ -42,3 +42,14 @@ def test_get_word_info_not_found(mock_get):
     # Tell pytest that we EXPECT a ValueError to be raised here
     with pytest.raises(ValueError, match="not_found"):
         get_word_info("notarealword123")
+
+
+@patch("word_stack.api.requests.get")
+def test_get_word_info_connection_error(mock_get):
+    """Test how the app handles a complete network failure."""
+
+    # .side_effect is used in mocks to simulate an exception being thrown
+    mock_get.side_effect = requests.exceptions.ConnectionError("No internet")
+
+    with pytest.raises(ConnectionError):
+        get_word_info("wifi_is_down_word")
