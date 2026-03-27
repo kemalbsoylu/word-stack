@@ -1,6 +1,6 @@
 [project]
 name = "word-stack"
-version = "0.1.0"
+version = "0.2.0"
 description = "A powerful, terminal-based vocabulary builder and daily study tool."
 requires-python = ">=3.12"
 dependencies = [

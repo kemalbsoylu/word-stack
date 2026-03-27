@@ -40,6 +40,11 @@ uv tool install --force .
 
 Once installed, you can use the `ws` alias from anywhere on your system.
 
+**Check your installed version:**
+```bash
+ws --version
+```
+
 **Add a word (Auto-fetches definition):**
 ```bash
 ws add "persevere"
