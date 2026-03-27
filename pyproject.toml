@@ -2,6 +2,7 @@
 name = "word-stack"
 version = "0.2.0"
 description = "A powerful, terminal-based vocabulary builder and daily study tool."
+readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "pytest>=9.0.2",
